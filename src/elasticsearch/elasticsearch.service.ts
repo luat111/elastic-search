@@ -38,7 +38,7 @@ export class ElascticSearchService {
                 product_custom_analyzer: {
                   tokenizer: 'standard',
                   filter: ['lowercase', 'english_stemmer'],
-                },
+                }
               },
               filter: {
                 english_stemmer: {
@@ -66,6 +66,9 @@ export class ElascticSearchService {
               },
               productPhoto: {
                 type: 'text',
+              },
+              id: {
+                type: 'keyword',
               },
             },
           },
@@ -289,6 +292,7 @@ export class ElascticSearchService {
           },
         },
       });
+
       return true;
     } catch (err) {
       console.log(err);
