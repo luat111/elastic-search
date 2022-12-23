@@ -8,7 +8,7 @@ import { Product } from 'src/entities/products';
 import { ProductDTO, QueryDTO } from './dto/product.dto';
 
 @Injectable()
-export class ElascticSearchService {
+export class ElasticSearchService {
   index: string = 'products';
   constructor(
     @InjectRepository(Product)
@@ -30,20 +30,22 @@ export class ElascticSearchService {
   async settingIndex(index: string): Promise<boolean> {
     try {
       await axios.put(
-        `http://27.71.224.4:9200/${index}`,
+        `http://localhost:9200/${index}`,
         {
           settings: {
             analysis: {
               analyzer: {
                 product_custom_analyzer: {
                   tokenizer: 'standard',
-                  filter: ['lowercase', 'english_stemmer'],
-                }
+                  char_filter: ['my_char_filter'],
+                  filter: ['lowercase', 'classic'],
+                },
               },
-              filter: {
-                english_stemmer: {
-                  type: 'stemmer',
-                  name: 'english',
+              char_filter: {
+                my_char_filter: {
+                  type: 'pattern_replace',
+                  pattern: '(\\w+)/(?=\\w)',
+                  replacement: '$1',
                 },
               },
             },
@@ -76,10 +78,10 @@ export class ElascticSearchService {
         {
           auth: {
             username: this.configService.get(
-              'elascticSearch.ELASTICSEARCH_USERNAME',
+              'elasticSearch.ELASTICSEARCH_USERNAME',
             ),
             password: this.configService.get(
-              'elascticSearch.ELASTICSEARCH_PASSWORD',
+              'elasticSearch.ELASTICSEARCH_PASSWORD',
             ),
           },
         },
@@ -130,13 +132,7 @@ export class ElascticSearchService {
 
   // Search
 
-  async search({
-    search,
-    limit,
-    offset,
-    min,
-    max,
-  }: QueryDTO): Promise<{ count: unknown | number; rows: unknown }> {
+  async search({ search, limit, offset, min, max }: QueryDTO): Promise<any> {
     try {
       const rangePrice = this.rangePrice(min, max)
         ? [
@@ -148,57 +144,97 @@ export class ElascticSearchService {
           ]
         : [];
 
-      const { hits: results } = await this.elasticsearchService.search({
+      const { hits: results, suggest } = await this.elasticsearchService.search(
+        {
+          index: this.index,
+          body: {
+            from: offset,
+            size: limit,
+            query: {
+              boosting: {
+                positive: {
+                  bool: {
+                    must: [...this.query(search), ...rangePrice],
+                  },
+                },
+                negative: {
+                  bool: {
+                    should: [
+                      {
+                        bool: {
+                          must: [
+                            {
+                              match: {
+                                cateName: 'Phụ kiện',
+                              },
+                            },
+                            ...rangePrice,
+                            ...this.query(search),
+                          ],
+                        },
+                      },
+                      {
+                        bool: {
+                          must: [
+                            {
+                              match: {
+                                cateName: 'Work Setup',
+                              },
+                            },
+                            ...rangePrice,
+                            ...this.query(search),
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                negative_boost: 0.3,
+              },
+            },
+            suggest: {
+              suggestion: {
+                text: search,
+                term: {
+                  field: 'name',
+                  sort: 'frequency',
+                  suggest_mode: 'always',
+                },
+              },
+            },
+          },
+        },
+      );
+
+      const { hits: resultsRelated } = await this.elasticsearchService.search({
         index: this.index,
         body: {
           from: offset,
           size: limit,
           query: {
-            boosting: {
-              positive: {
-                bool: {
-                  must: [...this.query(search), ...rangePrice],
-                },
+            more_like_this: {
+              fields: ['name', 'cate'],
+              like: search,
+              min_term_freq: 1,
+              max_query_terms: 12,
+            },
+          },
+          suggest: {
+            suggestion: {
+              text: search,
+              term: {
+                field: 'name',
+                sort: 'frequency',
+                suggest_mode: 'always',
               },
-              negative: {
-                bool: {
-                  should: [
-                    {
-                      bool: {
-                        must: [
-                          {
-                            match: {
-                              cateName: 'Phụ kiện',
-                            },
-                          },
-                          ...rangePrice,
-                          ...this.query(search),
-                        ],
-                      },
-                    },
-                    {
-                      bool: {
-                        must: [
-                          {
-                            match: {
-                              cateName: 'Work Setup',
-                            },
-                          },
-                          ...rangePrice,
-                          ...this.query(search),
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-              negative_boost: 0.3,
             },
           },
         },
       });
 
       return {
+        suggest,
+        resultsRelated: resultsRelated.hits.map((p) => p._source),
         count: results.total['value'] || 0,
         rows: results.hits.map((p) => p._source),
       };

@@ -1,6 +1,6 @@
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
-  elascticSearch: {
+  elasticSearch: {
     ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE || '',
     ELASTICSEARCH_USERNAME: process.env.ELASTICSEARCH_USERNAME || '',
     ELASTICSEARCH_PASSWORD: process.env.ELASTICSEARCH_PASSWORD || '',

@@ -9,21 +9,21 @@ import {
   Query,
 } from '@nestjs/common';
 import { ProductDTO, QueryDTO } from './dto/product.dto';
-import { ElascticSearchService } from './elasticsearch.service';
+import { ElasticSearchService } from './elasticsearch.service';
 
 @Controller('elasticsearch')
-export class ElascticSearchController {
-  constructor(private readonly elascticSearchService: ElascticSearchService) {}
+export class ElasticSearchController {
+  constructor(private readonly elasticSearchService: ElasticSearchService) {}
 
   @Get('index')
   async get() {
-    return await this.elascticSearchService.indexProducts();
+    return await this.elasticSearchService.indexProducts();
   }
 
   @Get('search')
   async search(@Query() query: QueryDTO) {
     const { search = '', limit = 20, offset = 0, min, max } = query;
-    return await this.elascticSearchService.search({
+    return await this.elasticSearchService.search({
       search,
       limit,
       offset,
@@ -34,27 +34,27 @@ export class ElascticSearchController {
 
   @Get('getall')
   async getAll() {
-    return await this.elascticSearchService.getAllIndex();
+    return await this.elasticSearchService.getAllIndex();
   }
 
   @Post('index-one')
   async indexOne(@Body() product: ProductDTO) {
-    return await this.elascticSearchService.indexOne(product);
+    return await this.elasticSearchService.indexOne(product);
   }
 
   @Put('update-one')
   async updateOne(@Body() product: ProductDTO) {
-    return await this.elascticSearchService.updateIndex(product);
+    return await this.elasticSearchService.updateIndex(product);
   }
 
   @Delete('remove-one/:id')
   async removeOne(@Param() params) {
     const { id } = params;
-    return await this.elascticSearchService.removeIndex(id);
+    return await this.elasticSearchService.removeIndex(id);
   }
 
   @Delete('clearall')
   async clearAll() {
-    return await this.elascticSearchService.clearAllIndex();
+    return await this.elasticSearchService.clearAllIndex();
   }
 }

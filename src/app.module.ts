@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
-import { ElascticSearchModule } from './elasticsearch/elasticsearch.module';
+import { ElasticSearchModule } from './elasticsearch/elasticsearch.module';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { ElascticSearchModule } from './elasticsearch/elasticsearch.module';
         type: 'postgresql',
       }),
     }),
-    ElascticSearchModule,
+    ElasticSearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { Product } from 'src/entities/products';
-import { ElascticSearchController } from './elasticsearch.controller';
-import { ElascticSearchService } from './elasticsearch.service';
+import { ElasticSearchController } from './elasticsearch.controller';
+import { ElasticSearchService } from './elasticsearch.service';
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { ElascticSearchService } from './elasticsearch.service';
       inject: [ConfigService],
     }),
   ],
-  controllers: [ElascticSearchController],
-  providers: [ElascticSearchService],
+  controllers: [ElasticSearchController],
+  providers: [ElasticSearchService],
 })
-export class ElascticSearchModule {}
+export class ElasticSearchModule {}
